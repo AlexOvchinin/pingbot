@@ -15,8 +15,13 @@ type PersistentChatStorage struct {
 var mu sync.Mutex
 
 func (cs *ChatStorage) save() {
+	chats := []*Chat{}
+	for _, chat := range cs.chats {
+		chats = append(chats, chat)
+	}
+
 	storage := &PersistentChatStorage{
-		Chats: cs.chats,
+		Chats: chats,
 	}
 
 	mu.Lock()

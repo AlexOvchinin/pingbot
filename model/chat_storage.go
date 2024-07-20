@@ -16,9 +16,8 @@ type Chat struct {
 }
 
 type ChatStorage struct {
-	chats        []*Chat
-	chatIndex    map[int64]*Chat
-	mentionIndex map[string]*ChatMention
+	chats        map[int64]*Chat
+	mentions map[string]*ChatMention
 	dataPath     string
 }
 
@@ -32,9 +31,8 @@ const (
 
 func NewChatStorage(dataPath string) *ChatStorage {
 	result := &ChatStorage{
-		chats:        make([]*Chat, 0),
-		chatIndex:    make(map[int64]*Chat),
-		mentionIndex: make(map[string]*ChatMention),
+		chats:        make(map[int64]*Chat),
+		mentions: make(map[string]*ChatMention),
 		dataPath:     dataPath,
 	}
 	result.load()
@@ -83,7 +81,7 @@ func (cs *ChatStorage) addUser(mention *ChatMention, user *User) bool {
 }
 
 func (cs *ChatStorage) RemoveUser(chatId int64, user *User) {
-	chat, ok := cs.chatIndex[chatId]
+	chat, ok := cs.chats[chatId]
 	if !ok {
 		return
 	}
@@ -96,7 +94,7 @@ func (cs *ChatStorage) RemoveUser(chatId int64, user *User) {
 }
 
 func (cs *ChatStorage) GetMentionUsers(chatId int64, mentionName string) ([]*User, error) {
-	mention := cs.mentionIndex[getMentionKey(chatId, mentionName)]
+	mention := cs.mentions[getMentionKey(chatId, mentionName)]
 	if mention == nil {
 		return nil, errors.New(ErrorUnknownMention)
 	}
@@ -105,12 +103,12 @@ func (cs *ChatStorage) GetMentionUsers(chatId int64, mentionName string) ([]*Use
 }
 
 func (cs *ChatStorage) getMention(chatId int64, mentionName string) *ChatMention {
-	_, ok := cs.chatIndex[chatId]
+	_, ok := cs.chats[chatId]
 	if !ok {
 		cs.createChat(chatId)
 	}
 
-	return cs.mentionIndex[getMentionKey(chatId, mentionName)]
+	return cs.mentions[getMentionKey(chatId, mentionName)]
 }
 
 func (cs *ChatStorage) createChat(id int64) *Chat {
@@ -122,10 +120,9 @@ func (cs *ChatStorage) createChat(id int64) *Chat {
 			createMention(MentionEveryoneName),
 		},
 	}
-	cs.chats = append(cs.chats, chat)
-	cs.chatIndex[id] = chat
+	cs.chats[id] = chat
 	for _, mention := range chat.Mentions {
-		cs.mentionIndex[getMentionKey(id, mention.Name)] = mention
+		cs.mentions[getMentionKey(id, mention.Name)] = mention
 	}
 
 	go cs.save()
@@ -145,18 +142,18 @@ func getMentionKey(chatId int64, mentionName string) string {
 }
 
 func (cs *ChatStorage) ChangeChatId(oldId int64, newId int64) {
-	chat := cs.chatIndex[oldId]
+	chat := cs.chats[oldId]
 	chat.ID = newId
 
-	cs.chatIndex[newId] = chat
-	delete(cs.chatIndex, oldId)
+	cs.chats[newId] = chat
+	delete(cs.chats, oldId)
 
 	for _, mention := range chat.Mentions {
 		newMentionKey := getMentionKey(newId, mention.Name)
-		cs.mentionIndex[newMentionKey] = mention
+		cs.mentions[newMentionKey] = mention
 
 		oldMentionKey := getMentionKey(oldId, mention.Name)
-		delete(cs.mentionIndex, oldMentionKey)
+		delete(cs.mentions, oldMentionKey)
 	}
 
 	go cs.save()
@@ -164,9 +161,8 @@ func (cs *ChatStorage) ChangeChatId(oldId int64, newId int64) {
 
 func (cs *ChatStorage) switchChats(chats []*Chat) {
 	//add global mutex
-	cs.chats = nil
-	cs.chatIndex = make(map[int64]*Chat)
-	cs.mentionIndex = make(map[string]*ChatMention)
+	cs.chats = make(map[int64]*Chat)
+	cs.mentions = make(map[string]*ChatMention)
 
 	for _, chat := range chats {
 		cs.addChat(chat)
@@ -174,13 +170,12 @@ func (cs *ChatStorage) switchChats(chats []*Chat) {
 }
 
 func (cs *ChatStorage) addChat(chat *Chat) {
-	if cs.chatIndex[chat.ID] != nil {
+	if cs.chats[chat.ID] != nil {
 		return
 	}
 
-	cs.chats = append(cs.chats, chat)
-	cs.chatIndex[chat.ID] = chat
+	cs.chats[chat.ID] = chat
 	for _, mention := range chat.Mentions {
-		cs.mentionIndex[getMentionKey(chat.ID, mention.Name)] = mention
+		cs.mentions[getMentionKey(chat.ID, mention.Name)] = mention
 	}
 }
