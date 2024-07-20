@@ -32,4 +32,4 @@ jobs:
       with:
         name: pingbot-binary
         path: ./
-        if-no-file-found: error
+        if-no-files-found: error
