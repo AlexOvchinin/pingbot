@@ -31,4 +31,5 @@ jobs:
       uses: actions/upload-artifact@v4.3.4
       with:
         name: pingbot-binary
+        path: ./
         if-no-file-found: error
