@@ -51,11 +51,3 @@ jobs:
           password: ${{ secrets.DEPLOY_HOST_SSH_PASSWORD }}
           source: pingbot
           target: /apps/pingbot
-      - name: Deploy artifact
-        uses: garygrossgarten/github-action-scp@release
-        with:
-          local: pingbot
-          remote: /apps/pingbot/pingbot
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_HOST_SSH_USER }}
-          password: ${{ secrets.DEPLOY_HOST_SSH_PASSWORD }}
