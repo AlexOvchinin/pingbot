@@ -44,6 +44,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: pingbot-binary
+      - name: Make binary executable
+        run: chmod +x ./pingbot
       - name: Deploy artifact
         uses: appleboy/scp-action@v0.1.7
         with:
