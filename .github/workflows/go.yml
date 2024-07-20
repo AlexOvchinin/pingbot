@@ -43,9 +43,10 @@ jobs:
           name: pingbot-binary
           path: pingbot-binary
       - name: Deploy artifact
+        uses: garygrossgarten/github-action-scp@release
         with:
           local: pingbot-binary
-          remote: /apps/pingbot/
+          remote: /apps/pingbot/pingbot-binary
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_HOST_SSH_USER }}
           password: ${{ secrets.DEPLOY_HOST_SSH_PASSWORD }}
