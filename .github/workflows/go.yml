@@ -44,6 +44,14 @@ jobs:
         with:
           name: pingbot-binary
       - name: Deploy artifact
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_HOST_SSH_USER }}
+          password: ${{ secrets.DEPLOY_HOST_SSH_PASSWORD }}
+          source: pingbot
+          target: /apps/pingbot
+      - name: Deploy artifact
         uses: garygrossgarten/github-action-scp@release
         with:
           local: pingbot
