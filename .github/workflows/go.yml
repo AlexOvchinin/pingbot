@@ -33,3 +33,19 @@ jobs:
         name: pingbot-binary
         path: ./
         if-no-files-found: error
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pingbot-binary
+          path: pingbot-binary
+      - name: Deploy artifact
+        with:
+          local: pingbot-binary
+          remote: /apps/pingbot/
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_HOST_SSH_USER }}
+          password: ${{ secrets.DEPLOY_HOST_SSH_PASSWORD }}
