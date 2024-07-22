@@ -1,0 +1,6 @@
+add - add users to everyone mention. Example: /add @user1 @user2
+everyone - mention everyone
+join - join mention. Use /join to choose or /join <mention> to join immediately
+create_mention - create mention. Example: /create_mention <mention>
+mention - mention some group. Use /mention to choose group or /mention <mention> when you know who to call
+list - list currently created groups

@@ -16,9 +16,9 @@ type Chat struct {
 }
 
 type ChatStorage struct {
-	chats        map[int64]*Chat
+	chats    map[int64]*Chat
 	mentions map[string]*ChatMention
-	dataPath     string
+	dataPath string
 }
 
 const (
@@ -26,17 +26,29 @@ const (
 )
 
 const (
-	ErrorUnknownMention string = "unknown-mention"
+	ErrorUnknownMention   string = "unknown-mention"
+	ErrorDuplicateMention string = "duplicate-mention"
 )
 
 func NewChatStorage(dataPath string) *ChatStorage {
 	result := &ChatStorage{
-		chats:        make(map[int64]*Chat),
+		chats:    make(map[int64]*Chat),
 		mentions: make(map[string]*ChatMention),
-		dataPath:     dataPath,
+		dataPath: dataPath,
 	}
 	result.load()
 	return result
+}
+
+func (cs *ChatStorage) AddMention(chatId int64, mentionName string) error {
+	mention := cs.getMention(chatId, mentionName)
+	if mention != nil {
+		return errors.New(ErrorDuplicateMention)
+	}
+
+	cs.mentions[getMentionKey(chatId, mentionName)] = createMention(mentionName)
+	go cs.save()
+	return nil
 }
 
 func (cs *ChatStorage) AddUserToMention(chatId int64, mentionName string, user *User) error {

@@ -32,6 +32,9 @@ func main() {
 	// bot commands
 	b.Handle("/add", handlers.HandleAddCommand)
 	b.Handle("/everyone", handlers.HandleEveryoneCommand)
+	b.Handle("/join", handlers.HandleJoinCommand)
+	b.Handle("/create_mention", handlers.HandleCreateMention)
+	b.Handle("/mention", handlers.HandleMention)
 
 	// chat events
 	b.Handle(tele.OnUserJoined, handlers.HandleUserJoined)
