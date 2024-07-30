@@ -26,8 +26,13 @@ const (
 )
 
 const (
-	ErrorUnknownMention   string = "unknown-mention"
-	ErrorDuplicateMention string = "duplicate-mention"
+	ErrorUnknownMention                  string = "unknown-mention"
+	ErrorDuplicateMention                string = "duplicate-mention"
+	ErrorExceededMaximumNumberOfMentions string = "exceeded-maximum-number-of-mentions"
+)
+
+const (
+	MAX_MENTIONS_NUMBER = 10
 )
 
 func NewChatStorage(dataPath string) *ChatStorage {
@@ -46,6 +51,10 @@ func (cs *ChatStorage) AddMention(chatId int64, mentionName string) error {
 	mention := cs.getMention(chatId, mentionName)
 	if mention != nil {
 		return errors.New(ErrorDuplicateMention)
+	}
+
+	if len(chat.Mentions) >= MAX_MENTIONS_NUMBER {
+		return errors.New(ErrorExceededMaximumNumberOfMentions)
 	}
 
 	mention = createMention(mentionName)
