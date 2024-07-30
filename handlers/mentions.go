@@ -8,13 +8,13 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-func mention(ctx tele.Context, mentionName string) error {
+func sendMention(ctx tele.Context, currentUser *model.User, mentionName string) error {
 	users, e := Storage.GetMentionUsers(ctx.Chat().ID, mentionName)
 	if e != nil {
 		return ctx.Send(mapStorageErrorToBotError(e, mentionName))
 	}
 
-	users = model.RemoveUser(getSenderUser(ctx), users)
+	users = model.RemoveUser(currentUser, users)
 
 	mentionMessage := getMentionUsersString(users)
 	if len(mentionMessage) == 0 {

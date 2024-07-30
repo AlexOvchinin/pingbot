@@ -6,6 +6,10 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
+const (
+	MENTION_COMMAND_NAME = "mention"
+)
+
 func HandleMention(ctx tele.Context) error {
 	message := ctx.Message()
 	if len(message.Entities) > 1 {
@@ -14,9 +18,17 @@ func HandleMention(ctx tele.Context) error {
 
 	mentionName := strings.TrimSpace(message.Payload)
 	if len(mentionName) > 0 {
-		return mention(ctx, mentionName)
+		return sendMention(ctx, getSenderUser(ctx), mentionName)
 	} else {
-		// run reply flow
+		return replyWithMentionKeyboard(ctx, "Please choose who to mention", MENTION_COMMAND_NAME)
 	}
-	return nil
+}
+
+func handleMentionCallback(ctx tele.Context, arguments map[string]string) error {
+	mentionName, ok := arguments[MENTION_ARGUMENT_NAME]
+	if !ok {
+		return ctx.Send("Unknown mention")
+	}
+
+	return sendMention(ctx, getCallbackUser(ctx), mentionName)
 }
