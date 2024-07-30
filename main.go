@@ -40,6 +40,7 @@ func main() {
 	b.Handle(tele.OnUserJoined, handlers.HandleUserJoined)
 	b.Handle(tele.OnUserLeft, handlers.HandleUserLeft)
 	b.Handle(tele.OnMigration, handlers.HandleMigration)
+	b.Handle(tele.OnCallback, handlers.OnCallback)
 
 	b.Start()
 

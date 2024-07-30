@@ -30,3 +30,7 @@ func createUser(id int64, username string, firstName string) *model.User {
 func getSenderUser(ctx tele.Context) *model.User {
 	return createUser(ctx.Message().Sender.ID, ctx.Message().Sender.Username, ctx.Message().Sender.FirstName)
 }
+
+func getCallbackUser(ctx tele.Context) *model.User {
+	return createUser(ctx.Callback().Sender.ID, ctx.Callback().Sender.Username, ctx.Callback().Sender.FirstName)
+}

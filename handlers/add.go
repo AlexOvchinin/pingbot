@@ -7,8 +7,6 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-var Storage *model.ChatStorage
-
 func HandleAddCommand(ctx tele.Context) error {
 	users := make([]*model.User, 0)
 

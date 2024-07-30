@@ -41,12 +41,17 @@ func NewChatStorage(dataPath string) *ChatStorage {
 }
 
 func (cs *ChatStorage) AddMention(chatId int64, mentionName string) error {
+	chat := cs.getOrCreateChat(chatId)
+
 	mention := cs.getMention(chatId, mentionName)
 	if mention != nil {
 		return errors.New(ErrorDuplicateMention)
 	}
 
-	cs.mentions[getMentionKey(chatId, mentionName)] = createMention(mentionName)
+	mention = createMention(mentionName)
+	chat.Mentions = append(chat.Mentions, mention)
+	cs.mentions[getMentionKey(chatId, mentionName)] = mention
+
 	go cs.save()
 	return nil
 }
@@ -115,12 +120,16 @@ func (cs *ChatStorage) GetMentionUsers(chatId int64, mentionName string) ([]*Use
 }
 
 func (cs *ChatStorage) getMention(chatId int64, mentionName string) *ChatMention {
-	_, ok := cs.chats[chatId]
-	if !ok {
-		cs.createChat(chatId)
-	}
-
+	cs.getOrCreateChat(chatId)
 	return cs.mentions[getMentionKey(chatId, mentionName)]
+}
+
+func (cs *ChatStorage) getOrCreateChat(chatId int64) *Chat {
+	chat, ok := cs.chats[chatId]
+	if !ok {
+		chat = cs.createChat(chatId)
+	}
+	return chat
 }
 
 func (cs *ChatStorage) createChat(id int64) *Chat {
@@ -190,4 +199,19 @@ func (cs *ChatStorage) addChat(chat *Chat) {
 	for _, mention := range chat.Mentions {
 		cs.mentions[getMentionKey(chat.ID, mention.Name)] = mention
 	}
+}
+
+func (cs *ChatStorage) GetChatMentions(chatId int64) []string {
+	chat, ok := cs.chats[chatId]
+	if !ok {
+		return []string{}
+	}
+
+	chatMentions := []string{}
+
+	for _, mention := range chat.Mentions {
+		chatMentions = append(chatMentions, mention.Name)
+	}
+
+	return chatMentions
 }
