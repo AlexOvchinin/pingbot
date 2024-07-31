@@ -35,8 +35,13 @@ func main() {
 	b.Handle("/join", handlers.HandleJoinCommand)
 	b.Handle("/create_mention", handlers.HandleCreateMention)
 	b.Handle("/mention", handlers.HandleMention)
+	b.Handle(tele.OnQuery, func(ctx tele.Context) error {
+		log.Println("query")
+		return nil
+	})
 
 	// chat events
+	b.Handle(tele.OnText, handlers.HandleText)
 	b.Handle(tele.OnUserJoined, handlers.HandleUserJoined)
 	b.Handle(tele.OnUserLeft, handlers.HandleUserLeft)
 	b.Handle(tele.OnMigration, handlers.HandleMigration)

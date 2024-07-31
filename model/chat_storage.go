@@ -119,6 +119,11 @@ func (cs *ChatStorage) RemoveUser(chatId int64, user *User) {
 	go cs.save()
 }
 
+func (cs *ChatStorage) IsMentionExists(chatId int64, mentionName string) bool {
+	_, ok := cs.mentions[getMentionKey(chatId, mentionName)]
+	return ok
+}
+
 func (cs *ChatStorage) GetMentionUsers(chatId int64, mentionName string) ([]*User, error) {
 	mention := cs.mentions[getMentionKey(chatId, mentionName)]
 	if mention == nil {

@@ -8,7 +8,7 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-func sendMention(ctx tele.Context, currentUser *model.User, mentionName string) error {
+func mention(ctx tele.Context, currentUser *model.User, mentionName string) error {
 	users, e := Storage.GetMentionUsers(ctx.Chat().ID, mentionName)
 	if e != nil {
 		return ctx.Send(mapStorageErrorToBotError(e, mentionName))
@@ -24,6 +24,14 @@ func sendMention(ctx tele.Context, currentUser *model.User, mentionName string) 
 	return ctx.Send(mentionMessage, tele.ModeMarkdownV2)
 }
 
+func tryMention(ctx tele.Context, currentUser *model.User, mentionName string) error {
+	if Storage.IsMentionExists(ctx.Chat().ID, mentionName) {
+		return mention(ctx, currentUser, mentionName)
+	}
+
+	return nil
+}
+
 func getMentionUsersString(users []*model.User) string {
 	var builder strings.Builder
 
@@ -32,7 +40,7 @@ func getMentionUsersString(users []*model.User) string {
 		fmt.Fprintf(&builder, " ")
 	}
 
-	return strings.Trim(builder.String(), " ")
+	return strings.TrimSpace(builder.String())
 }
 
 func getUserMention(user *model.User) string {
