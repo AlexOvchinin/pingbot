@@ -27,8 +27,9 @@ func HandleMention(ctx tele.Context) error {
 func handleMentionCallback(ctx tele.Context, arguments map[string]string) error {
 	mentionName, ok := arguments[MENTION_ARGUMENT_NAME]
 	if !ok {
-		return ctx.Send("Unknown mention")
+		return ctx.EditOrReply("Unknown mention")
 	}
 
+	ctx.Delete()
 	return sendMention(ctx, getCallbackUser(ctx), mentionName)
 }
