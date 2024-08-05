@@ -21,7 +21,7 @@ func mention(ctx tele.Context, currentUser *model.User, mentionName string) erro
 		return ctx.Send("Noone to mention. Please use /add to add users to mention manually")
 	}
 
-	return ctx.Send(fmt.Sprintf("Calling %v\! %v", mentionName, mentionContent), tele.ModeMarkdownV2)
+	return ctx.Send(fmt.Sprintf("Calling %v\\! %v", mentionName, mentionContent), tele.ModeMarkdownV2)
 }
 
 func tryMention(ctx tele.Context, currentUser *model.User, mentionName string) error {
