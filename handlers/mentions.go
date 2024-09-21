@@ -18,7 +18,7 @@ func mention(ctx tele.Context, currentUser *model.User, mentionName string) erro
 
 	mentionContent := getMentionUsersString(users)
 	if len(mentionContent) == 0 {
-		return ctx.Send("Noone to mention. Please use /add to add users to mention manually")
+		return ctx.Send("Noone to mention. Please use /add to add users to mention manually or /join to join it yourself")
 	}
 
 	return ctx.Send(fmt.Sprintf("Calling %v\\! %v", mentionName, mentionContent), tele.ModeMarkdownV2)
