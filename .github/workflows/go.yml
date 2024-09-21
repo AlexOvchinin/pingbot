@@ -57,7 +57,8 @@ jobs:
           key: ${{ secrets.DEPLOY_HOST_PRIVATE_KEY }}
           source: pingbot
           target: /apps/pingbot
-      - name: multiple command
+          
+      - name: Restart systemctl service
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DEPLOY_HOST }}
