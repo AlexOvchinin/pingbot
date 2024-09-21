@@ -63,5 +63,5 @@ jobs:
           username: ${{ secrets.DEPLOY_HOST_SSH_USER }}
           key: ${{ secrets.DEPLOY_HOST_PRIVATE_KEY }}
           script: |
-            sudo systemctl restart pingbot.service
+            # sudo systemctl restart pingbot.service
             sudo systemctl status pingbot.service
