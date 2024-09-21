@@ -35,10 +35,7 @@ func main() {
 	b.Handle("/join", handlers.HandleJoinCommand)
 	b.Handle("/create_mention", handlers.HandleCreateMention)
 	b.Handle("/mention", handlers.HandleMention)
-	b.Handle(tele.OnQuery, func(ctx tele.Context) error {
-		log.Println("query")
-		return nil
-	})
+	b.Handle("/help", handlers.HandleHelpCommand)
 
 	// chat events
 	b.Handle(tele.OnText, handlers.HandleText)
