@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fm/pingbot/model"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -10,12 +11,17 @@ import (
 
 func replyWithMentionKeyboard(ctx tele.Context, text string, commandName string) error {
 	mentionNames := Storage.GetChatMentions(ctx.Chat().ID)
-	markup := tele.ReplyMarkup{}
-	markup.InlineKeyboard = buildReplyInlineKeyboard(sortMentions(mentionNames), func(value string) string {
+
+	mentionsKeyboard := buildReplyInlineKeyboard(sortMentions(mentionNames), func(value string) string {
 		return buildCommandString(commandName, map[string]string{
 			MENTION_ARGUMENT_NAME: value,
 		})
 	})
+
+	mentionsKeyboard = addCancelButton(mentionsKeyboard, commandName)
+
+	markup := tele.ReplyMarkup{}
+	markup.InlineKeyboard = mentionsKeyboard
 	return ctx.EditOrReply(text, &markup)
 }
 
@@ -34,12 +40,19 @@ func sortMentions(values []string) []string {
 	return sortedValues
 }
 
+func addCancelButton(keyboard [][]tele.InlineButton, commandName string) [][]tele.InlineButton {
+	return append(keyboard, []tele.InlineButton{
+		{
+			Text: fmt.Sprintf(CANCEL_COMMAND_TEXT_TEMPLATE, commandName),
+			Data: buildCommandString(CANCEL_COMMAND_NAME, map[string]string{}),
+		},
+	})
+}
+
 func buildReplyInlineKeyboard(values []string, callbackBuilder func(string) string) [][]tele.InlineButton {
 	result := [][]tele.InlineButton{}
 
-	rowNumber := len(values)
-
-	for i := 0; i < rowNumber; i++ {
+	for i := 0; i < len(values); i++ {
 		result = append(result, []tele.InlineButton{})
 	}
 

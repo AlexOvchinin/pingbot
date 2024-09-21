@@ -11,8 +11,6 @@ import (
 const (
 	// commmand
 	JOIN_COMMAND_NAME = "join"
-	// keyboard
-	MAX_BUTTONS_PER_KEYBOARD_ROW = 2
 )
 
 func HandleJoinCommand(ctx tele.Context) error {

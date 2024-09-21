@@ -22,6 +22,8 @@ func dispatch(ctx tele.Context, argments map[string]string) error {
 		return handleJoinCallback(ctx, argments)
 	case MENTION_COMMAND_NAME:
 		return handleMentionCallback(ctx, argments)
+	case CANCEL_COMMAND_NAME:
+		return handleCancelCallback(ctx, argments)
 	default:
 		return ctx.EditOrReply("Could not handle command, try again later")
 	}
