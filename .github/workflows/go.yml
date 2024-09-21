@@ -49,7 +49,7 @@ jobs:
       - name: Make binary executable
         run: chmod +x ./pingbot
         
-      - name: Deploy artifact
+      - name: Copy artifact to the host
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DEPLOY_HOST }}
@@ -57,3 +57,12 @@ jobs:
           password: ${{ secrets.DEPLOY_HOST_SSH_PASSWORD }}
           source: pingbot
           target: /apps/pingbot
+      - name: multiple command
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.DEPLOY_HOST_PRIVATE_KEY }}
+          script: |
+            whoami
+            ls -al
