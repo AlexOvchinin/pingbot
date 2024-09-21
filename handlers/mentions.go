@@ -21,7 +21,7 @@ func mention(ctx tele.Context, currentUser *model.User, mentionName string) erro
 		return ctx.Send("Noone to mention. Please use /add to add users to mention manually or /join to join it yourself")
 	}
 
-	return ctx.Send(fmt.Sprintf("Calling %v\\! %v", mentionName, mentionContent), tele.ModeMarkdownV2)
+	return ctx.Send(fmt.Sprintf("%s is calling %v\\! %v", getUserName(currentUser), mentionName, mentionContent), tele.ModeMarkdownV2)
 }
 
 func tryMention(ctx tele.Context, currentUser *model.User, mentionName string) error {
@@ -48,5 +48,13 @@ func getUserMention(user *model.User) string {
 		return fmt.Sprintf("@%v", user.Username)
 	} else {
 		return fmt.Sprintf("[%v](tg://user?id=%v)", user.FirstName, user.ID)
+	}
+}
+
+func getUserName(user *model.User) string {
+	if len(user.Username) > 0 {
+		return user.Username
+	} else {
+		return user.FirstName
 	}
 }
