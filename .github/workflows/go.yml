@@ -11,51 +11,51 @@ on:
 
 jobs:
 
-  # build:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - uses: actions/checkout@v4
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
 
-  #   - name: Set up Go
-  #     uses: actions/setup-go@v4
-  #     with:
-  #       go-version: '1.22'
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.22'
 
-  #   - name: Build
-  #     run: go build -v -o ./ ./...
+    - name: Build
+      run: go build -v -o ./ ./...
 
-  #   - name: Test
-  #     run: go test -v ./...
+    - name: Test
+      run: go test -v ./...
 
-  #   - name: Upload build artifact
-  #     uses: actions/upload-artifact@v4.3.4
-  #     with:
-  #       name: pingbot-binary
-  #       path: ./pingbot
-  #       if-no-files-found: error
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4.3.4
+      with:
+        name: pingbot-binary
+        path: ./pingbot
+        if-no-files-found: error
 
   deploy:
     runs-on: ubuntu-latest
-    # needs: build
+    needs: build
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
 
-      # - name: Download binary artifact
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: pingbot-binary
+      - name: Download binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pingbot-binary
 
-      # - name: Make binary executable
-      #   run: chmod +x ./pingbot
+      - name: Make binary executable
+        run: chmod +x ./pingbot
         
-      # - name: Copy artifact to the host
-      #   uses: appleboy/scp-action@v0.1.7
-      #   with:
-      #     host: ${{ secrets.DEPLOY_HOST }}
-      #     key: ${{ secrets.DEPLOY_HOST_PRIVATE_KEY }}
-      #     source: pingbot
-      #     target: /apps/pingbot
+      - name: Copy artifact to the host
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          key: ${{ secrets.DEPLOY_HOST_PRIVATE_KEY }}
+          source: pingbot
+          target: /apps/pingbot
       - name: multiple command
         uses: appleboy/ssh-action@v1.0.3
         with:
