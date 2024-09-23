@@ -8,7 +8,7 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-func mention(ctx tele.Context, currentUser *model.User, mentionName string) error {
+func mention(ctx tele.Context, currentUser *model.User, mentionName string, content string) error {
 	users, e := Storage.GetMentionUsers(ctx.Chat().ID, mentionName)
 	if e != nil {
 		return ctx.Send(mapStorageErrorToBotError(e, mentionName))
@@ -16,17 +16,25 @@ func mention(ctx tele.Context, currentUser *model.User, mentionName string) erro
 
 	users = model.RemoveUser(currentUser, users)
 
-	mentionContent := getMentionUsersString(users)
-	if len(mentionContent) == 0 {
+	usersMention := getMentionUsersString(users)
+	if len(usersMention) == 0 {
 		return ctx.Send(fmt.Sprintf("Noone to mention in %s. Please use /add to add users to mention manually or /join to join it yourself", mentionName))
 	}
 
-	return ctx.Send(fmt.Sprintf("%s is calling %v\\! %v", getUserName(currentUser), mentionName, mentionContent), tele.ModeMarkdownV2)
+	message := fmt.Sprintf("%s calling %s", getUserName(currentUser), mentionName)
+	if len(content) > 0 {
+		message += ": " + content
+	}
+	if len(message) > 0 {
+		message += fmt.Sprintf("\n%v", usersMention)
+	}
+
+	return ctx.Send(message, tele.ModeMarkdownV2)
 }
 
-func tryMention(ctx tele.Context, currentUser *model.User, mentionName string) error {
+func tryMention(ctx tele.Context, currentUser *model.User, mentionName string, content string) error {
 	if Storage.IsMentionExists(ctx.Chat().ID, mentionName) {
-		return mention(ctx, currentUser, mentionName)
+		return mention(ctx, currentUser, mentionName, content)
 	}
 
 	return nil

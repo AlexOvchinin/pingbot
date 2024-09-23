@@ -18,7 +18,7 @@ func HandleMention(ctx tele.Context) error {
 
 	mentionName := strings.TrimSpace(message.Payload)
 	if len(mentionName) > 0 {
-		return mention(ctx, getSenderUser(ctx), mentionName)
+		return mention(ctx, getSenderUser(ctx), mentionName, "")
 	} else {
 		return replyWithMentionKeyboard(ctx, "Please choose who to mention", MENTION_COMMAND_NAME)
 	}
@@ -31,5 +31,5 @@ func handleMentionCallback(ctx tele.Context, arguments map[string]string) error 
 	}
 
 	ctx.Delete()
-	return mention(ctx, getCallbackUser(ctx), mentionName)
+	return mention(ctx, getCallbackUser(ctx), mentionName, "")
 }
