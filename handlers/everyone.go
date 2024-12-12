@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+
 	"fm/pingbot/model"
 
 	tele "gopkg.in/telebot.v3"
@@ -21,5 +23,6 @@ func HandleEveryoneCommand(ctx tele.Context) error {
 		return ctx.Send("Noone to mention. Please use /add or to add users to mention manually or /join to join it yourself")
 	}
 
+	fmt.Println(mentionMessage)
 	return ctx.Send(mentionMessage, tele.ModeMarkdownV2)
 }
