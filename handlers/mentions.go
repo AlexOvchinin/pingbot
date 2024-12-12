@@ -53,7 +53,7 @@ func getMentionUsersString(users []*model.User) string {
 
 func getUserMention(user *model.User) string {
 	if len(user.Username) > 0 {
-		return fmt.Sprintf("@%v", user.Username)
+		return fmt.Sprintf("@%v", strings.Replace(user.Username, "_", "\\_", -1))
 	} else {
 		return fmt.Sprintf("[%v](tg://user?id=%v)", user.FirstName, user.ID)
 	}
