@@ -41,7 +41,7 @@ func handleJoinCallback(ctx tele.Context, arguments map[string]string) error {
 func addSenderToMention(ctx tele.Context, user *model.User, mentionName string) error {
 	addResult := Storage.AddUserToMention(ctx.Chat().ID, mentionName, user)
 	if addResult != nil {
-		return ctx.EditOrReply(fmt.Sprintf("Failed to add user %v to mention %v", getUserMention(user), mentionName), tele.ModeMarkdownV2)
+		return ctx.EditOrReply(fmt.Sprintf("Failed to add user %v to mention %v", getUserMentionHtml(user), mentionName), tele.ModeHTML)
 	}
-	return ctx.EditOrReply(fmt.Sprintf("Sucessfully added user %v to mention %v", getUserMention(user), mentionName), tele.ModeMarkdownV2)
+	return ctx.EditOrReply(fmt.Sprintf("Sucessfully added user %v to mention %v", getUserMentionHtml(user), mentionName), tele.ModeHTML)
 }

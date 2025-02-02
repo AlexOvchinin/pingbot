@@ -29,7 +29,7 @@ func mention(ctx tele.Context, currentUser *model.User, mentionName string, cont
 		message += fmt.Sprintf("\n%v", usersMention)
 	}
 
-	return ctx.Send(message, tele.ModeMarkdownV2)
+	return ctx.Send(message, tele.ModeHTML)
 }
 
 func tryMention(ctx tele.Context, currentUser *model.User, mentionName string, content string) error {
@@ -44,19 +44,23 @@ func getMentionUsersString(users []*model.User) string {
 	var builder strings.Builder
 
 	for _, user := range users {
-		fmt.Fprintf(&builder, "%v", getUserMention(user))
+		fmt.Fprintf(&builder, "%v", getUserMentionHtml(user))
 		fmt.Fprintf(&builder, " ")
 	}
 
 	return strings.TrimSpace(builder.String())
 }
 
-func getUserMention(user *model.User) string {
+func getUserMentionMarkdown(user *model.User) string {
 	if len(user.Username) > 0 {
 		return fmt.Sprintf("@%v", strings.Replace(user.Username, "_", "\\_", -1))
 	} else {
 		return fmt.Sprintf("[%v](tg://user?id=%v)", user.FirstName, user.ID)
 	}
+}
+
+func getUserMentionHtml(user *model.User) string {
+	return fmt.Sprintf("<a href=\"tg://user?id=%v\">%v</a>", user.ID, user.FirstName)
 }
 
 func getUserName(user *model.User) string {
