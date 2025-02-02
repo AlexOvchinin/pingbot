@@ -4,6 +4,7 @@ import (
 	"fm/pingbot/model"
 	"fmt"
 	"strings"
+	"html"
 
 	tele "gopkg.in/telebot.v3"
 )
@@ -23,7 +24,7 @@ func mention(ctx tele.Context, currentUser *model.User, mentionName string, cont
 
 	message := fmt.Sprintf("%s calling %s", getUserName(currentUser), mentionName)
 	if len(content) > 0 {
-		message += ": " + content
+		message += ": " + html.EscapeString(content)
 	}
 	if len(message) > 0 {
 		message += fmt.Sprintf("\n%v", usersMention)
@@ -60,7 +61,7 @@ func getUserMentionMarkdown(user *model.User) string {
 }
 
 func getUserMentionHtml(user *model.User) string {
-	return fmt.Sprintf("<a href=\"tg://user?id=%v\">%v</a>", user.ID, user.FirstName)
+	return fmt.Sprintf("<a href=\"tg://user?id=%v\">%v</a>", user.ID, html.EscapeString(user.FirstName))
 }
 
 func getUserName(user *model.User) string {
