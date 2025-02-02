@@ -3,8 +3,8 @@ package handlers
 import (
 	"fm/pingbot/model"
 	"fmt"
-	"strings"
 	"html"
+	"strings"
 
 	tele "gopkg.in/telebot.v3"
 )
@@ -61,7 +61,11 @@ func getUserMentionMarkdown(user *model.User) string {
 }
 
 func getUserMentionHtml(user *model.User) string {
-	return fmt.Sprintf("<a href=\"tg://user?id=%v\">%v</a>", user.ID, html.EscapeString(user.FirstName))
+	if len(user.Username) > 0 {
+		return fmt.Sprintf("@%v", user.Username)
+	} else {
+		return fmt.Sprintf("<a href=\"tg://user?id=%v\">%v</a>", user.ID, html.EscapeString(user.FirstName))
+	}
 }
 
 func getUserName(user *model.User) string {
