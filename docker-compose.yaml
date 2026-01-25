@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pingbot-app
+    restart: unless-stopped
+    env_file:
+      - /hot/apps/pingbot/.env
+    environment:
+      - TZ=UTC
+    volumes:
+      - /hot/apps/pingbot/data:/home/appuser/data  # Optional: for persistent data
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
