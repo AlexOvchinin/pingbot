@@ -7,6 +7,9 @@ services:
     restart: unless-stopped
     env_file:
       - /hot/apps/pingbot/.env
+    args:
+      USER_ID: 1000
+      GROUP_ID: 1000
     environment:
       - TZ=UTC
     volumes:
