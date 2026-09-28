@@ -45,12 +45,7 @@ func suggestCreatingMentions(ctx tele.Context, missing []string) error {
 }
 
 func handleCreateMentionsCallback(ctx tele.Context, _ map[string]string) error {
-	message := ctx.Callback().Message
-	if message == nil || message.ReplyTo == nil || message.ReplyTo.Sender == nil ||
-		ctx.Callback().Sender == nil || message.ReplyTo.Sender.ID != ctx.Callback().Sender.ID {
-		return ctx.RespondAlert("Only the sender of the original command can create these mentions")
-	}
-	original := message.ReplyTo
+	original := ctx.Callback().Message.ReplyTo
 	fields := strings.Fields(original.Text)
 	if len(fields) == 0 || (fields[0] != "/join" && !strings.HasPrefix(fields[0], "/join@")) {
 		return ctx.Edit("Original command does not match /join")
@@ -83,11 +78,6 @@ func handleCreateMentionsCallback(ctx tele.Context, _ map[string]string) error {
 }
 
 func handleCreateAndContinueCallback(ctx tele.Context, arguments map[string]string) error {
-	message := ctx.Callback().Message
-	if message == nil || message.ReplyTo == nil || message.ReplyTo.Sender == nil ||
-		ctx.Callback().Sender == nil || message.ReplyTo.Sender.ID != ctx.Callback().Sender.ID {
-		return ctx.RespondAlert("Only the sender of the original command can create this mention")
-	}
 	mentionName := arguments[MENTION_ARGUMENT_NAME]
 	command := arguments[ORIGINAL_COMMAND_ARGUMENT_NAME]
 	if command != ADD_COMMAND_NAME && command != JOIN_COMMAND_NAME {
@@ -96,7 +86,7 @@ func handleCreateAndContinueCallback(ctx tele.Context, arguments map[string]stri
 	if len(mentionName) == 0 || len(mentionName) > MaxMentionLength || re.MatchString(mentionName) {
 		return ctx.Edit(ErrorReplyCreateMention)
 	}
-	original := message.ReplyTo
+	original := ctx.Callback().Message.ReplyTo
 	fields := strings.Fields(original.Text)
 	if len(fields) == 0 || !strings.HasPrefix(fields[0], "/"+command) {
 		return ctx.Edit("Original command does not match this mention")

@@ -73,10 +73,11 @@ func TestDeleteRejectsOtherSenderAndEveryone(t *testing.T) {
 	c.message.Chat = c.chat
 	c.callback.Message.ReplyTo = c.message
 	c.callback.Sender = &tele.User{ID: 999}
-	if err := handleConfirmDeleteCallback(c, map[string]string{MENTION_ARGUMENT_NAME: "team"}); err != nil {
+	c.callback.Data = "command=delete_confirm&mention=team"
+	if err := OnCallback(c); err != nil {
 		t.Fatal(err)
 	}
-	expectCall(t, c, "alert", "Only the sender of /delete can delete a mention")
+	expectCall(t, c, "alert", "Only the sender of the original command can use this keyboard")
 	if !Storage.IsMentionExists(7, "team") {
 		t.Fatal("unauthorized deletion")
 	}

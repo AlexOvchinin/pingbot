@@ -41,9 +41,6 @@ func chooseMentionToDelete(ctx tele.Context, unmatched string) error {
 }
 
 func handleDeleteCallback(ctx tele.Context, arguments map[string]string) error {
-	if !originalDeleteSender(ctx) {
-		return ctx.RespondAlert("Only the sender of /delete can delete a mention")
-	}
 	name := arguments[MENTION_ARGUMENT_NAME]
 	if name == model.MentionEveryoneName || !Storage.IsMentionExists(ctx.Chat().ID, name) {
 		return chooseMentionToDelete(ctx, name)
@@ -61,9 +58,6 @@ func confirmDeleteMention(ctx tele.Context, name string) error {
 }
 
 func handleConfirmDeleteCallback(ctx tele.Context, arguments map[string]string) error {
-	if !originalDeleteSender(ctx) {
-		return ctx.RespondAlert("Only the sender of /delete can delete a mention")
-	}
 	name := arguments[MENTION_ARGUMENT_NAME]
 	if name == "" {
 		return ctx.Edit("Unknown mention")
@@ -72,16 +66,4 @@ func handleConfirmDeleteCallback(ctx tele.Context, arguments map[string]string) 
 		return ctx.Edit(mapStorageErrorToBotError(err, name))
 	}
 	return ctx.Edit(fmt.Sprintf("Mention %s deleted", name))
-}
-
-func originalDeleteSender(ctx tele.Context) bool {
-	callback := ctx.Callback()
-	if callback == nil || callback.Sender == nil || callback.Message == nil ||
-		callback.Message.ReplyTo == nil || callback.Message.ReplyTo.Sender == nil {
-		return false
-	}
-	original := callback.Message.ReplyTo
-	command := strings.Fields(original.Text)
-	return len(command) > 0 && (command[0] == "/delete" || strings.HasPrefix(command[0], "/delete@")) &&
-		original.Sender.ID == callback.Sender.ID
 }

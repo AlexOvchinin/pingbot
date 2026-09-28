@@ -131,6 +131,7 @@ func TestJoinLeaveCommands(t *testing.T) {
 
 func TestMentionKeyboardAndCallback(t *testing.T) {
 	c := setupHandlers(t)
+	c.callback.Message.ReplyTo = c.message
 	_ = Storage.AddMention(7, "zebra")
 	_ = Storage.AddMention(7, "Alpha")
 	c.message.Payload = ""
@@ -173,6 +174,65 @@ func TestMentionKeyboardAndCallback(t *testing.T) {
 	expectCall(t, c, "editOrReply", "Could not handle command, try again later")
 }
 
+func TestOnlyOriginalCommandSenderCanUseCallbackKeyboard(t *testing.T) {
+	for _, data := range []string{
+		"command=mention&mention=team",
+		"command=join&mention=team",
+		"command=leave&mention=team",
+		"command=delete&mention=team",
+		"command=delete_confirm&mention=team",
+		"command=create&mention=team&for=join",
+		"command=create_many",
+		"command=cancel",
+	} {
+		t.Run(data, func(t *testing.T) {
+			c := setupHandlers(t)
+			_ = Storage.AddMention(7, "team")
+			_ = Storage.AddUserToMention(7, "team", &model.User{ID: 77, Username: "bob"})
+			c.callback.Message.ReplyTo = c.message
+			c.callback.Data = data
+			c.callback.Sender = &tele.User{ID: 99, Username: "mallory"}
+			if err := OnCallback(c); err != nil {
+				t.Fatal(err)
+			}
+			if len(c.calls) != 1 || c.calls[0].method != "alert" {
+				t.Fatalf("unauthorized callback calls = %+v", c.calls)
+			}
+			if !Storage.IsMentionExists(7, "team") {
+				t.Fatal("unauthorized callback deleted team")
+			}
+			users, _ := Storage.GetMentionUsers(7, "team")
+			if len(users) != 1 || users[0].ID != 77 {
+				t.Fatalf("unauthorized callback changed team users: %v", users)
+			}
+		})
+	}
+}
+
+func TestCallbackRequiresOriginalSenderInformation(t *testing.T) {
+	c := setupHandlers(t)
+	c.callback.Data = "command=cancel"
+	if err := OnCallback(c); err != nil {
+		t.Fatal(err)
+	}
+	expectCall(t, c, "alert", "Only the sender of the original command can use this keyboard")
+	if len(c.calls) != 1 {
+		t.Fatalf("callback without original sender changed message: %+v", c.calls)
+	}
+}
+
+func TestOriginalSenderCanUseMentionKeyboard(t *testing.T) {
+	c := setupHandlers(t)
+	_ = Storage.AddMention(7, "team")
+	_ = Storage.AddUserToMention(7, "team", &model.User{ID: 77, Username: "bob"})
+	c.callback.Message.ReplyTo = c.message
+	c.callback.Data = "command=mention&mention=team"
+	if err := OnCallback(c); err != nil {
+		t.Fatal(err)
+	}
+	expectCall(t, c, "send", "alice calling team\n@bob")
+}
+
 func TestAddCommandAndSuggestion(t *testing.T) {
 	c := setupHandlers(t)
 	_ = Storage.AddMention(7, "team")
@@ -207,7 +267,7 @@ func TestCreateAndContinueCallbackAuthorizationAndOriginalCommand(t *testing.T) 
 	}{
 		{"add", "add", "/add team @bob", "team", 42, "Added @bob to group team", true},
 		{"join", "join", "/join team", "team", 42, "Sucessfully added user @alice to mention team", true},
-		{"wrong user", "join", "/join team", "team", 99, "Only the sender of the original command can create this mention", false},
+		{"wrong user", "join", "/join team", "team", 99, "Only the sender of the original command can use this keyboard", false},
 		{"mismatched name", "join", "/join other", "team", 42, "Original command does not match this mention", false},
 		{"bad command", "leave", "/leave team", "team", 42, "Unknown command", false},
 	} {
