@@ -13,6 +13,8 @@ func mapStorageErrorToBotError(e error, mentionName string) string {
 		return fmt.Sprintf("Mention %v not found. Add it with /create_mention command", mentionName)
 	case model.ErrorExceededMaximumNumberOfMentions:
 		return "Exceed maximum number of mentions for current chat"
+	case model.ErrorProtectedMention:
+		return "The default everyone mention cannot be deleted"
 	}
 	return "Unknown error has happened"
 }

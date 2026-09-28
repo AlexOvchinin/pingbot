@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sync"
 )
 
 type PersistentChatStorage struct {
 	Chats []*Chat
 }
 
-var mu sync.Mutex
-
+// save is called with cs.mu held. Holding the lock through the write ensures
+// each completed mutation is persisted in order before another can begin.
 func (cs *ChatStorage) save() {
 	chats := []*Chat{}
 	for _, chat := range cs.chats {
@@ -24,12 +23,10 @@ func (cs *ChatStorage) save() {
 		Chats: chats,
 	}
 
-	mu.Lock()
-	defer mu.Unlock()
-
 	f, err := os.Create(cs.dataPath)
 	if err != nil {
 		log.Println(err)
+		return
 	}
 
 	defer f.Close()
@@ -37,6 +34,7 @@ func (cs *ChatStorage) save() {
 	marshaledChats, err := json.Marshal(storage)
 	if err != nil {
 		log.Println(err)
+		return
 	}
 
 	_, err = f.WriteString(string(marshaledChats))

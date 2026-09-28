@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"sync"
 )
 
 type ChatMention struct {
@@ -16,6 +17,7 @@ type Chat struct {
 }
 
 type ChatStorage struct {
+	mu       sync.RWMutex
 	chats    map[int64]*Chat
 	mentions map[string]*ChatMention
 	dataPath string
@@ -29,6 +31,7 @@ const (
 	ErrorUnknownMention                  string = "unknown-mention"
 	ErrorDuplicateMention                string = "duplicate-mention"
 	ErrorExceededMaximumNumberOfMentions string = "exceeded-maximum-number-of-mentions"
+	ErrorProtectedMention                string = "protected-mention"
 )
 
 const (
@@ -46,6 +49,8 @@ func NewChatStorage(dataPath string) *ChatStorage {
 }
 
 func (cs *ChatStorage) AddMention(chatId int64, mentionName string) error {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
 	chat := cs.getOrCreateChat(chatId)
 
 	mention := cs.getMention(chatId, mentionName)
@@ -61,22 +66,48 @@ func (cs *ChatStorage) AddMention(chatId int64, mentionName string) error {
 	chat.Mentions = append(chat.Mentions, mention)
 	cs.mentions[getMentionKey(chatId, mentionName)] = mention
 
-	go cs.save()
+	cs.save()
+	return nil
+}
+
+// DeleteMention removes one named mention and all of its memberships.
+// The default everyone mention is a permanent part of each chat.
+func (cs *ChatStorage) DeleteMention(chatId int64, mentionName string) error {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+	if mentionName == MentionEveryoneName {
+		return errors.New(ErrorProtectedMention)
+	}
+	chat := cs.chats[chatId]
+	if chat == nil || cs.mentions[getMentionKey(chatId, mentionName)] == nil {
+		return errors.New(ErrorUnknownMention)
+	}
+	for i, mention := range chat.Mentions {
+		if mention.Name == mentionName {
+			chat.Mentions = append(chat.Mentions[:i], chat.Mentions[i+1:]...)
+			break
+		}
+	}
+	delete(cs.mentions, getMentionKey(chatId, mentionName))
+	cs.save()
 	return nil
 }
 
 func (cs *ChatStorage) AddUserToMention(chatId int64, mentionName string, user *User) error {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
 	mention := cs.getMention(chatId, mentionName)
 	if mention == nil {
 		return errors.New(ErrorUnknownMention)
 	}
 	cs.addUser(mention, user)
-	go cs.save()
-	//modify under mutex
+	cs.save()
 	return nil
 }
 
 func (cs *ChatStorage) AddUsersToMention(chatId int64, mentionName string, users []*User) []*User {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
 	mention := cs.getMention(chatId, mentionName)
 	if mention == nil {
 		return []*User{}
@@ -90,14 +121,21 @@ func (cs *ChatStorage) AddUsersToMention(chatId int64, mentionName string, users
 		}
 	}
 
-	go cs.save()
+	cs.save()
 
 	return result
 }
 
 func (cs *ChatStorage) addUser(mention *ChatMention, user *User) bool {
-	//modify under mutex
-	newUsers := AddUser(user, mention.Users)
+	// Retain our own value: callers may reuse or edit their input after return.
+	if user == nil {
+		return false
+	}
+	newUsers := mention.Users
+	if !ContainsUser(user, mention.Users) {
+		copyUser := *user
+		newUsers = append(newUsers, &copyUser)
+	}
 	if len(mention.Users) != len(newUsers) {
 		mention.Users = newUsers
 		return true
@@ -107,6 +145,8 @@ func (cs *ChatStorage) addUser(mention *ChatMention, user *User) bool {
 }
 
 func (cs *ChatStorage) RemoveUser(chatId int64, user *User) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
 	chat, ok := cs.chats[chatId]
 	if !ok {
 		return
@@ -116,21 +156,70 @@ func (cs *ChatStorage) RemoveUser(chatId int64, user *User) {
 		mention.Users = RemoveUser(user, mention.Users)
 	}
 
-	go cs.save()
+	cs.save()
+}
+
+// RemoveUserFromMention removes a user only from the named mention.
+func (cs *ChatStorage) RemoveUserFromMention(chatId int64, mentionName string, user *User) (bool, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+	mention := cs.getMention(chatId, mentionName)
+	if mention == nil {
+		return false, errors.New(ErrorUnknownMention)
+	}
+	users := RemoveUser(user, mention.Users)
+	if len(users) == len(mention.Users) {
+		return false, nil
+	}
+	mention.Users = users
+	cs.save()
+	return true, nil
+}
+
+// RemoveUsersFromMention removes only users present in the named mention.
+func (cs *ChatStorage) RemoveUsersFromMention(chatId int64, mentionName string, users []*User) ([]*User, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+	mention := cs.getMention(chatId, mentionName)
+	if mention == nil {
+		return nil, errors.New(ErrorUnknownMention)
+	}
+	removed := []*User{}
+	for _, user := range users {
+		if ContainsUser(user, mention.Users) && !ContainsUser(user, removed) {
+			mention.Users = RemoveUser(user, mention.Users)
+			removed = append(removed, user)
+		}
+	}
+	if len(removed) > 0 {
+		cs.save()
+	}
+	return removed, nil
 }
 
 func (cs *ChatStorage) IsMentionExists(chatId int64, mentionName string) bool {
+	cs.mu.RLock()
+	defer cs.mu.RUnlock()
 	_, ok := cs.mentions[getMentionKey(chatId, mentionName)]
 	return ok
 }
 
 func (cs *ChatStorage) GetMentionUsers(chatId int64, mentionName string) ([]*User, error) {
+	cs.mu.RLock()
+	defer cs.mu.RUnlock()
 	mention := cs.mentions[getMentionKey(chatId, mentionName)]
 	if mention == nil {
 		return nil, errors.New(ErrorUnknownMention)
 	}
 
-	return mention.Users, nil
+	users := make([]*User, len(mention.Users))
+	for i, user := range mention.Users {
+		if user != nil {
+			copyUser := *user
+			users[i] = &copyUser
+		}
+	}
+	return users, nil
 }
 
 func (cs *ChatStorage) getMention(chatId int64, mentionName string) *ChatMention {
@@ -147,8 +236,6 @@ func (cs *ChatStorage) getOrCreateChat(chatId int64) *Chat {
 }
 
 func (cs *ChatStorage) createChat(id int64) *Chat {
-	// TODO: use monitor with double checking
-	// TODO: update chat and mention indices
 	chat := &Chat{
 		ID: id,
 		Mentions: []*ChatMention{
@@ -160,7 +247,7 @@ func (cs *ChatStorage) createChat(id int64) *Chat {
 		cs.mentions[getMentionKey(id, mention.Name)] = mention
 	}
 
-	go cs.save()
+	cs.save()
 
 	return chat
 }
@@ -177,7 +264,12 @@ func getMentionKey(chatId int64, mentionName string) string {
 }
 
 func (cs *ChatStorage) ChangeChatId(oldId int64, newId int64) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
 	chat := cs.chats[oldId]
+	if chat == nil || oldId == newId {
+		return
+	}
 	chat.ID = newId
 
 	cs.chats[newId] = chat
@@ -191,11 +283,12 @@ func (cs *ChatStorage) ChangeChatId(oldId int64, newId int64) {
 		delete(cs.mentions, oldMentionKey)
 	}
 
-	go cs.save()
+	cs.save()
 }
 
 func (cs *ChatStorage) switchChats(chats []*Chat) {
-	//add global mutex
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
 	cs.chats = make(map[int64]*Chat)
 	cs.mentions = make(map[string]*ChatMention)
 
@@ -216,6 +309,8 @@ func (cs *ChatStorage) addChat(chat *Chat) {
 }
 
 func (cs *ChatStorage) GetChatMentions(chatId int64) []string {
+	cs.mu.RLock()
+	defer cs.mu.RUnlock()
 	chat, ok := cs.chats[chatId]
 	if !ok {
 		return []string{}

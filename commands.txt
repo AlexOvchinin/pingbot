@@ -1,3 +1,7 @@
-join - join mention. Use /join to choose or /join <mention> to join immediately
+join - join mentions. Use /join to choose or /join team ops to join multiple
+leave - leave mentions. Use /leave to choose or /leave team ops to leave multiple
+add - add users to a mention. Use /add @user1 @user2 for everyone or /add <mention> @user1 @user2 (mention can be anywhere)
+remove - remove tagged users from a mention. Use /remove <mention> @user1 @user2
+delete - delete a mention after confirmation. Use /delete <mention> or /delete to choose (everyone cannot be deleted)
 mention - mention some group. Use /mention to choose group or /mention <mention> when you know who to call
 help - get help for bot usage

@@ -31,8 +31,11 @@ func main() {
 
 	// bot commands
 	b.Handle("/add", handlers.HandleAddCommand)
+	b.Handle("/remove", handlers.HandleRemoveCommand)
+	b.Handle("/delete", handlers.HandleDeleteCommand)
 	b.Handle("/everyone", handlers.HandleEveryoneCommand)
 	b.Handle("/join", handlers.HandleJoinCommand)
+	b.Handle("/leave", handlers.HandleLeaveCommand)
 	b.Handle("/create_mention", handlers.HandleCreateMention)
 	b.Handle("/mention", handlers.HandleMention)
 	b.Handle("/help", handlers.HandleHelpCommand)
